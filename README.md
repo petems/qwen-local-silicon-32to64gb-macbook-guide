@@ -6,6 +6,16 @@ A no-nonsense guide to running Qwen3-Coder-Next locally on Apple Silicon MacBook
 
 ---
 
+## 0. Check Your Mac
+
+Not sure if your machine is compatible? Run the compatibility checker — it detects your chip, RAM, disk space, and installed tools, then tells you which configuration to use:
+
+```bash
+./check-compatibility.sh
+```
+
+---
+
 ## 1. Prerequisites
 
 - macOS with Apple Silicon (M1/M2/M3/M4), 32GB or 64GB unified memory
