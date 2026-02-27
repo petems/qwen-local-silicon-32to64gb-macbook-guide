@@ -1,5 +1,7 @@
 # qwen-coder-locally-on-32to64gb-macbook-silicon
 
+> Looking to run on Intel chipsets? https://github.com/petems/qwen-local-intel-32gb-macbook-guide
+
 A no-nonsense guide to running Qwen coding models locally on Apple Silicon MacBooks with your choice of coding agent or CLI tool. Covers both **32GB** and **64GB** configurations.
 
 > **About the models:** This guide covers three main local models — **Qwen3-Coder-Next** (80B MoE, 3B active, coding-specialized), **Qwen3.5-35B-A3B** (35B MoE, 3B active, general-purpose), and **Qwen2.5-Coder-32B** (32B dense, coding-focused). All run fully offline — your code never leaves your machine.
