@@ -110,6 +110,19 @@ llama-cli -hf unsloth/Qwen3-Coder-Next-GGUF:Q2_K
 
 > **Skip this section if you're using Ollama** — it serves automatically on port 11434.
 
+**Quick start:** The included script auto-detects your RAM and picks the right model/context size:
+
+```bash
+./start-llama-server.sh
+
+# Override defaults with environment variables:
+PORT=9090 ./start-llama-server.sh
+GPU_LAYERS=50 ./start-llama-server.sh
+CTX_SIZE=16384 ./start-llama-server.sh
+```
+
+Or run manually with the commands below.
+
 ### 64GB configuration (recommended)
 
 ```bash
