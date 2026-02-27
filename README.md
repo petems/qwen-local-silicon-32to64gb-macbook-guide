@@ -239,26 +239,57 @@ Not an agent — this is a CLI tool for firing single prompts at any model and p
 # Install
 brew install llm
 
-# Install Ollama plugin (for local models)
+# Install Ollama plugin (for local models via Ollama)
 llm install llm-ollama
+```
 
-# One-off prompts
+**Two ways to use it with local models:**
+
+**Via Ollama** — simplest if you already use Ollama. Note: `llm -m qwen3` tells Ollama to load the model, which **spins up a separate model instance**. If you already have a large model loaded in llama-server, this will compete for memory and may cause swapping/freezing.
+
+```bash
+# These use Ollama (will load the model into Ollama's memory)
 llm -m qwen2.5-coder:32b "Write a Python function that reverses a linked list"
+llm -m qwen3 "Write a Python function that reverses a linked list"
+```
 
+**Via llama-server** — if you already have llama-server running on port 8080, point `llm` at it directly. No extra memory needed. Run the setup script to configure it automatically:
+
+```bash
+./setup-llm-local.sh
+```
+
+Or manually add this to `~/Library/Application Support/io.datasette.llm/extra-openai-models.yaml`:
+
+```yaml
+- model_id: qwen-local
+  model_name: qwen3-coder-next
+  api_base: "http://localhost:8080/v1"
+```
+
+Then use it like any other model:
+
+```bash
+llm -m qwen-local "Write a Python function that reverses a linked list"
+```
+
+**Pipe-friendly examples (work with either setup):**
+
+```bash
 # Pipe code through it
-cat myfile.py | llm -s "Explain this code"
+cat myfile.py | llm -m qwen-local -s "Explain this code"
 
 # Generate commit messages from diffs
-git diff HEAD | llm -s "write a conventional commit message"
+git diff HEAD | llm -m qwen-local -s "write a conventional commit message"
 
 # Generate docs from source
-cat src/*.py | llm -s "generate a README.md in markdown" > README.md
+cat src/*.py | llm -m qwen-local -s "generate a README.md in markdown" > README.md
 
 # Explain errors
-cat error.log | llm -s "explain this error and suggest fixes"
+cat error.log | llm -m qwen-local -s "explain this error and suggest fixes"
 
 # Security review
-cat app.js | llm -s "perform security analysis and list vulnerabilities"
+cat app.js | llm -m qwen-local -s "perform security analysis and list vulnerabilities"
 ```
 
 The `llm` tool also supports tool use (since v0.26), logs all prompts/responses to SQLite for later review (`llm logs`), and has plugins for virtually every provider — OpenAI, Anthropic, Gemini, Ollama, llama-server, and more. It works with both cloud APIs and local models interchangeably.
@@ -480,7 +511,11 @@ opencode
 pi --model openai:qwen3-coder-next --api-base http://localhost:8080/v1
 
 # llm (one-off tasks) — https://llm.datasette.io/
+# Via Ollama (loads model in Ollama — don't mix with running llama-server)
 llm -m qwen2.5-coder:32b "your prompt"
-cat file.py | llm -s "review this code"
-git diff | llm -s "write commit message"
+llm -m qwen3 "your prompt"
+# Via llama-server (uses already-running server — no extra memory)
+llm -m qwen-local "your prompt"
+cat file.py | llm -m qwen-local -s "review this code"
+git diff | llm -m qwen-local -s "write commit message"
 ```
