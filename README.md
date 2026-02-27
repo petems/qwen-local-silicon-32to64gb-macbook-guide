@@ -226,13 +226,23 @@ brew install anomalyco/tap/opencode
 
 # Or via npm
 npm install -g @opencode/cli
+```
 
-# Configure for llama-server
-opencode config set baseURL http://localhost:8080/v1
-opencode config set apiKey "not-needed"
+OpenCode uses a JSON config file (`opencode.jsonc`) in your project root. This repo includes one pre-configured for both llama-server and Ollama. To use it, just run:
 
-# Run (will let you select from available models)
+```bash
+# Run from this repo's directory — it picks up opencode.jsonc automatically
 opencode
+```
+
+The included `opencode.jsonc` defines both providers so you can switch between them. To change the default model, edit the `"model"` field:
+
+```jsonc
+// Use llama-server (default)
+"model": "llama.cpp/qwen3-coder-next"
+
+// Or switch to Ollama
+"model": "ollama/qwen2.5-coder:32b"
 ```
 
 See the [install docs](https://opencode.ai/docs/#install) for more options.
@@ -381,17 +391,11 @@ Each tool has its own model naming convention. Here's how to reference your loca
 
 | Scenario | Aider | OpenCode | Pi | `llm` CLI |
 |---|---|---|---|---|
-| **llama-server on 8080** | `openai/qwen3-coder-next` | Configure base URL in settings (see below) | `llama-server/qwen3-coder-next` | Custom alias: `qwen-local` |
+| **llama-server on 8080** | `openai/qwen3-coder-next` | `llama.cpp/qwen3-coder-next` (via `opencode.jsonc`) | `llama-server/qwen3-coder-next` | Custom alias: `qwen-local` |
 | **Ollama (qwen2.5)** | `ollama/qwen2.5-coder:32b` | `ollama/qwen2.5-coder:32b` | `ollama/qwen2.5-coder:32b` | `qwen2.5-coder:32b` |
 | **Ollama (qwen3)** | `ollama/qwen3-coder-next` | `ollama/qwen3-coder-next` | `ollama/qwen3:latest` | `qwen3` (with llm-ollama) |
 
-**OpenCode configuration note:** OpenCode doesn't use model names in the same way. Instead, configure your base URL and it will query available models:
-
-```bash
-opencode config set baseURL http://localhost:8080/v1
-opencode config set apiKey "not-needed"
-# Then select model interactively when you run opencode
-```
+**OpenCode configuration note:** OpenCode uses a project-level `opencode.jsonc` config file (included in this repo). It defines custom providers with the `@ai-sdk/openai-compatible` npm package, so you can name models explicitly and set context/output limits. No API key is needed for local providers — just omit it. Edit `opencode.jsonc` to change the default model or add new providers.
 
 ---
 
@@ -601,7 +605,11 @@ aider --model openai/qwen3-coder-next \
 aider --model ollama/qwen2.5-coder:32b
 
 # OpenCode (agent TUI) — https://opencode.ai/
-opencode
+# Uses opencode.jsonc in project root for provider config
+opencode                                    # uses default model from config
+# Edit opencode.jsonc "model" field to switch between:
+#   "llama.cpp/qwen3-coder-next"            # llama-server on :8080
+#   "ollama/qwen2.5-coder:32b"              # Ollama on :11434
 
 # Pi (extensible harness) — https://pi.dev/
 # Requires ~/.pi/agent/models.json config (see Section 5, Option C)
