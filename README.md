@@ -259,7 +259,37 @@ aider --model ollama_chat/qwen3.5:35b-a3b
 # aider --model ollama_chat/qwen2.5-coder:32b
 ```
 
-> **Note:** Aider may show a warning like *"Unknown context window size and costs, using sane defaults"* for local models. This is harmless — it just means Aider doesn't have the model in its built-in database. It defaults to unlimited context and free tokens, which is correct for local models. This repo includes a pre-configured `.aider.model.settings.yml` that suppresses the warning and sets correct context window sizes — if you run Aider from this repo's directory, it picks it up automatically. To use it in other projects, copy it or create your own `.aider.model.settings.yml` in your project root or home directory:
+> **Note:** Aider may show a warning like *"Unknown context window size and costs, using sane defaults"* for local models. This is harmless — it just means Aider doesn't have the model in its built-in database. This repo includes two pre-configured files that handle this — if you run Aider from this repo's directory, it picks them up automatically:
+>
+> - **`.aider.model.metadata.json`** — registers context window sizes and token costs (suppresses the warning)
+> - **`.aider.model.settings.yml`** — sets edit format and Ollama `num_ctx` parameter
+>
+> To use them in other projects, copy both files or create your own. The metadata file (`.aider.model.metadata.json`) is what actually suppresses the warning:
+>
+> ```json
+> {
+>     "openai/qwen3-coder-next": {
+>         "max_tokens": 32768,
+>         "max_input_tokens": 65536,
+>         "max_output_tokens": 32768,
+>         "input_cost_per_token": 0,
+>         "output_cost_per_token": 0,
+>         "litellm_provider": "openai",
+>         "mode": "chat"
+>     },
+>     "ollama_chat/qwen3.5:35b-a3b": {
+>         "max_tokens": 32768,
+>         "max_input_tokens": 65536,
+>         "max_output_tokens": 32768,
+>         "input_cost_per_token": 0,
+>         "output_cost_per_token": 0,
+>         "litellm_provider": "ollama_chat",
+>         "mode": "chat"
+>     }
+> }
+> ```
+>
+> And the settings file (`.aider.model.settings.yml`) configures edit format and context:
 >
 > ```yaml
 > - name: openai/qwen3-coder-next
@@ -270,13 +300,9 @@ aider --model ollama_chat/qwen3.5:35b-a3b
 > - name: ollama_chat/qwen3.5:35b-a3b
 >   extra_params:
 >     num_ctx: 65536
->
-> - name: ollama_chat/qwen2.5-coder:32b
->   extra_params:
->     num_ctx: 32768
 > ```
 >
-> See the [Aider model settings docs](https://aider.chat/docs/config/adv-model-settings.html) for more options.
+> See the [Aider advanced model settings docs](https://aider.chat/docs/config/adv-model-settings.html) for more options.
 
 **Best for:** editing existing codebases, refactoring, fixing bugs across multiple files.
 
