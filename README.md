@@ -381,9 +381,9 @@ Each tool has its own model naming convention. Here's how to reference your loca
 
 | Scenario | Aider | OpenCode | Pi | `llm` CLI |
 |---|---|---|---|---|
-| **llama-server on 8080** | `openai/qwen3-coder-next` | Configure base URL in settings (see below) | `openai:qwen3-coder-next` | Custom alias: `qwen-local` |
-| **Ollama (qwen2.5)** | `ollama/qwen2.5-coder:32b` | `ollama/qwen2.5-coder:32b` | `ollama:qwen2.5-coder:32b` | `qwen2.5-coder:32b` |
-| **Ollama (qwen3)** | `ollama/qwen3-coder-next` | `ollama/qwen3-coder-next` | `ollama:qwen3-coder-next` | `qwen3` (with llm-ollama) |
+| **llama-server on 8080** | `openai/qwen3-coder-next` | Configure base URL in settings (see below) | `llama-server/qwen3-coder-next` | Custom alias: `qwen-local` |
+| **Ollama (qwen2.5)** | `ollama/qwen2.5-coder:32b` | `ollama/qwen2.5-coder:32b` | `ollama/qwen2.5-coder:32b` | `qwen2.5-coder:32b` |
+| **Ollama (qwen3)** | `ollama/qwen3-coder-next` | `ollama/qwen3-coder-next` | `ollama/qwen3:latest` | `qwen3` (with llm-ollama) |
 
 **OpenCode configuration note:** OpenCode doesn't use model names in the same way. Instead, configure your base URL and it will query available models:
 
