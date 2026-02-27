@@ -1,8 +1,18 @@
 # qwen-coder-locally-on-32to64gb-macbook-silicon
 
-A no-nonsense guide to running Qwen3-Coder-Next locally on Apple Silicon MacBooks with your choice of coding agent or CLI tool. Covers both **32GB** and **64GB** configurations.
+A no-nonsense guide to running Qwen coding models locally on Apple Silicon MacBooks with your choice of coding agent or CLI tool. Covers both **32GB** and **64GB** configurations.
 
-> **What is this model?** An 80B parameter MoE model that only activates 3B params per inference. It scores near Claude Sonnet 4.5 on coding benchmarks while running on consumer hardware. Open weights, fully offline, your code never leaves your machine.
+> **About Qwen3-Coder-Next:** An 80B parameter MoE model that only activates 3B params per inference. Available in various quantizations to fit different RAM configurations. Open weights, fully offline, your code never leaves your machine.
+
+## Start Here — Pick Your Path
+
+**64GB Macs:**
+- **Recommended:** Qwen3-Coder-Next at Q4_K_M via llama-server — best quality for complex work
+- **Fast alternative:** Qwen2.5-Coder-32B via Ollama for quicker tasks
+
+**32GB Macs:**
+- **Recommended:** Qwen2.5-Coder-32B via Ollama — better quality at this RAM tier
+- **Alternative:** Qwen3-Coder-Next at Q2_K (fits but lower quality due to aggressive quantization)
 
 ---
 
@@ -37,10 +47,15 @@ Ollama handles downloading, quantization selection, and serving in one tool. If 
 # Install Ollama (skip if already installed)
 brew install ollama
 
-# Check if Ollama is already running
-pgrep ollama && echo "Already running" || ollama serve &
+# Check if Ollama is already running (safe pattern)
+if ! pgrep ollama >/dev/null 2>&1; then
+  ollama serve &
+  sleep 2  # Give it a moment to start
+fi
 
-# Pull the recommended model
+# Pull the recommended model for your RAM tier
+# For 32GB: qwen2.5-coder:32b (recommended)
+# For 64GB: qwen2.5-coder:32b (fast option) or larger models
 ollama pull qwen2.5-coder:32b
 
 # Verify it works
@@ -146,7 +161,7 @@ llama-server \
 llama-server \
   -hf unsloth/Qwen3-Coder-Next-GGUF:Q2_K \
   --ctx-size 32768 \
-  --n-gpu-layers 99 \
+  --n-gpu-layers 40 \
   --no-mmap \
   --flash-attn on \
   --temp 1.0 \
@@ -157,6 +172,8 @@ llama-server \
   --port 8080
 ```
 
+> **Why 40 GPU layers on 32GB?** This conservative default prevents swap storms on first run. You can increase to 60-80 if your system handles it well, but start conservative to ensure stability.
+
 ### Key flags explained
 
 See the [llama-server documentation](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md) for the full list of flags.
@@ -164,7 +181,7 @@ See the [llama-server documentation](https://github.com/ggml-org/llama.cpp/blob/
 | Flag | Why |
 |---|---|
 | `--ctx-size 65536` / `32768` | Caps context window. 64GB machines can use 64K tokens; 32GB machines should cap at 32K. **Critical** — the default 256K will OOM instantly. |
-| `--n-gpu-layers 99` | Offloads as many layers as possible to Metal GPU. On 32GB, lower to `30-50` if you hit memory pressure. |
+| `--n-gpu-layers 99` / `40` | Offloads layers to Metal GPU. 64GB can use 99 (all layers). 32GB uses conservative 40 to prevent memory pressure — tune upward if stable. |
 | `--no-mmap` | Loads model fully into RAM upfront — avoids page fault stuttering on macOS. Less critical on 64GB (more headroom) but still a reasonable default. |
 | `--flash-attn on` | Enables Flash Attention for faster inference. Default is `auto` in newer versions. |
 
@@ -210,11 +227,11 @@ brew install anomalyco/tap/opencode
 # Or via npm
 npm install -g @opencode/cli
 
-# Configure
-opencode config set model http://localhost:8080/v1
-opencode config set api-key "not-needed"
+# Configure for llama-server
+opencode config set baseURL http://localhost:8080/v1
+opencode config set apiKey "not-needed"
 
-# Run
+# Run (will let you select from available models)
 opencode
 ```
 
@@ -358,6 +375,24 @@ The `llm` tool also supports tool use (since v0.26), logs all prompts/responses 
 | **Best use** | Existing codebases | New projects | Custom workflows | Quick tasks & scripting |
 | **Install** | `pip install` | `npm install` | `npm install` | `brew install` |
 
+### Model naming across tools
+
+Each tool has its own model naming convention. Here's how to reference your local models:
+
+| Scenario | Aider | OpenCode | Pi | `llm` CLI |
+|---|---|---|---|---|
+| **llama-server on 8080** | `openai/qwen3-coder-next` | Configure base URL in settings (see below) | `openai:qwen3-coder-next` | Custom alias: `qwen-local` |
+| **Ollama (qwen2.5)** | `ollama/qwen2.5-coder:32b` | `ollama/qwen2.5-coder:32b` | `ollama:qwen2.5-coder:32b` | `qwen2.5-coder:32b` |
+| **Ollama (qwen3)** | `ollama/qwen3-coder-next` | `ollama/qwen3-coder-next` | `ollama:qwen3-coder-next` | `qwen3` (with llm-ollama) |
+
+**OpenCode configuration note:** OpenCode doesn't use model names in the same way. Instead, configure your base URL and it will query available models:
+
+```bash
+opencode config set baseURL http://localhost:8080/v1
+opencode config set apiKey "not-needed"
+# Then select model interactively when you run opencode
+```
+
 ---
 
 ## 6. Memory Optimisation Tips
@@ -372,25 +407,33 @@ You have plenty of headroom at Q4_K_M. Memory pressure is unlikely to be an issu
 
 ### 32GB Macs
 
-Since you're running tight on 32GB, here are practical levers to pull:
+The default configuration above uses conservative settings (--ctx-size 32768, --n-gpu-layers 40) to ensure stable first runs.
 
 **If you're hitting swap / slowdowns:**
 
 1. **Reduce context further:** Change `--ctx-size 32768` to `16384`. You lose context window but gain stability.
-2. **Reduce GPU layers:** Lower `--n-gpu-layers` from `99` to `30-50`. This splits work between GPU and CPU — slower but more stable.
+2. **Reduce GPU layers:** Lower `--n-gpu-layers` from `40` to `30`. This splits more work between GPU and CPU — slower but more stable.
 3. **Close other apps.** Seriously. Browsers with many tabs are the enemy. Check Activity Monitor for memory pressure.
 4. **Avoid conversation branching.** Don't regenerate responses — start fresh instead. llama.cpp handles linear conversations much better.
 
+**Advanced tuning — if system is stable:**
+
+If your 32GB Mac handles the conservative defaults well, you can tune upward:
+- Increase `--n-gpu-layers` to `60-80` for faster inference
+- Try `--ctx-size 49152` if you need more context and have headroom
+
+Monitor Activity Monitor → Memory tab. If you see yellow/red memory pressure, back off.
+
 **Expected performance on 32GB with Q2_K:**
 
-- ~15–25 tokens/sec generation speed
+- Generation speed typically in the 15–25 tokens/sec range (varies by task complexity)
 - 32K token context window (enough for most single-file tasks)
 - Usable for day-to-day coding, refactoring, writing tests, explaining code
 - May struggle with very complex multi-file architectural tasks
 
 **Expected performance on 64GB with Q4_K_M:**
 
-- ~15–25 tokens/sec generation speed (similar — bottleneck is compute, not memory)
+- Generation speed typically in the 15–25 tokens/sec range (bottleneck is compute, not memory)
 - 64K token context window (handles multi-file tasks much better)
 - Noticeably better output quality than Q2_K — fewer artifacts, better reasoning
 - Comfortable headroom to run alongside browsers and other apps
@@ -403,7 +446,7 @@ Depending on your RAM and use case, you might want a different model:
 
 ### Qwen2.5-Coder-32B — fast and proven
 
-A 32B parameter model that runs well on both 32GB and 64GB Macs. The default Ollama quant is ~20GB, leaving plenty of room for context and other apps. Benchmarks put it between GPT-4o and Claude 3.5 Haiku on Aider's code editing tests.
+A 32B parameter model that runs well on both 32GB and 64GB Macs. The default Ollama quant is ~20GB, leaving plenty of room for context and other apps. Performs well on code editing and generation tasks.
 
 **On 32GB Macs** this is arguably the best option — better quality than Qwen3-Coder-Next at Q2_K because you're running a smaller model at higher quantization.
 
@@ -426,7 +469,7 @@ pi --model ollama/qwen2.5-coder:32b
 
 ### Qwen3-Coder (the non-"Next" version)
 
-Smaller and designed to run on a single RTX 4090 or 32GB Mac. Achieved 46.8% on SWE-Bench Verified — the best open-source result. If available via Ollama:
+Smaller and designed to run on a single RTX 4090 or 32GB Mac. Performs well on software engineering benchmarks. If available via Ollama:
 
 ```bash
 ollama pull qwen3-coder
@@ -491,9 +534,6 @@ If you get a JSON response with generated code, you're good to go.
 **Port conflict on 8080 or 11434**
 → Check what's using the port: `lsof -i :8080`. Either stop the other process or use a different `--port` flag.
 
-**MLX is slow or buggy**
-→ Known issue with KV cache during conversation branching. Use llama.cpp or Ollama instead for now.
-
 **Ollama model management**
 → Use `ollama list` to see installed models, `ollama rm <name>` to free disk space, `ollama ps` to check what's loaded. See the [Ollama docs](https://github.com/ollama/ollama) for more.
 
@@ -533,17 +573,22 @@ llama-server \
   --temp 1.0 --top-p 0.95 --top-k 40 --min-p 0.01 \
   --jinja --port 8080
 
-# === 32GB: Qwen3-Coder-Next via llama-server ===
+# === 32GB: Qwen3-Coder-Next via llama-server (conservative defaults) ===
 
 llama-server \
   -hf unsloth/Qwen3-Coder-Next-GGUF:Q2_K \
-  --ctx-size 32768 --n-gpu-layers 99 --no-mmap --flash-attn on \
+  --ctx-size 32768 --n-gpu-layers 40 --no-mmap --flash-attn on \
   --temp 1.0 --top-p 0.95 --top-k 40 --min-p 0.01 \
   --jinja --port 8080
 
 # === ANY RAM: Qwen2.5-Coder-32B via Ollama (fast, proven) ===
 
-ollama pull qwen2.5-coder:32b && ollama serve
+# Safe start pattern - checks if already running
+if ! pgrep ollama >/dev/null 2>&1; then
+  ollama serve &
+  sleep 2
+fi
+ollama pull qwen2.5-coder:32b
 
 # === PICK YOUR TOOL ===
 

@@ -73,7 +73,7 @@ elif [[ $ram_gb -ge 32 ]]; then
   QUANT="Q2_K"
   MODEL_SIZE="~26GB"
   CTX_SIZE="${CTX_SIZE:-32768}"
-  GPU_LAYERS="${GPU_LAYERS:-99}"
+  GPU_LAYERS="${GPU_LAYERS:-40}"
 else
   fail "${ram_gb}GB RAM — not enough for Qwen3-Coder-Next"
   info "Minimum 32GB unified memory required."
