@@ -191,7 +191,10 @@ aider --model ollama/qwen2.5-coder:32b
 Open-source coding agent with a polished terminal UI. More exploratory and agent-like than Aider.
 
 ```bash
-# Install
+# Install (Homebrew — recommended)
+brew install anomalyco/tap/opencode
+
+# Or via npm
 npm install -g @opencode/cli
 
 # Configure
@@ -201,6 +204,8 @@ opencode config set api-key "not-needed"
 # Run
 opencode
 ```
+
+See the [install docs](https://opencode.ai/docs/#install) for more options.
 
 **Best for:** scaffolding new projects, exploring solutions, greenfield development.
 
