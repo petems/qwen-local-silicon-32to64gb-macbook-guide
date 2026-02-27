@@ -214,7 +214,10 @@ See the [install docs](https://opencode.ai/docs/#install) for more options.
 Built by Mario Zechner as a reaction to Claude Code's growing complexity. Pi is intentionally minimal — it ships with solid defaults but skips sub-agents and plan mode. Instead, you extend it with TypeScript extensions, skills, and prompt templates that you can share as npm/git packages. Supports Ollama, OpenAI-compatible endpoints, Anthropic, Google, and many more providers natively.
 
 ```bash
-# Install globally
+# Install (Homebrew — recommended)
+brew install pi-coding-agent
+
+# Or via npm
 npm install -g @mariozechner/pi-coding-agent
 
 # Point at your local server
@@ -224,7 +227,7 @@ pi --model openai:qwen3-coder-next --api-base http://localhost:8080/v1
 pi --model ollama:qwen3-coder-next
 ```
 
-Pi runs in four modes: interactive TUI, print/JSON for scripting, RPC for process integration, and SDK for embedding in your own apps. Install community packages with `pi install npm:@foo/pi-tools` or `pi install git:github.com/user/repo`. Configure with `pi config`.
+Pi runs in four modes: interactive TUI, print/JSON for scripting, RPC for process integration, and SDK for embedding in your own apps. Install community packages with `pi install npm:@foo/pi-tools` or `pi install git:github.com/user/repo`. Configure with `pi config`. See [pi.dev](https://pi.dev/) for more.
 
 **Best for:** developers who want Claude Code-style workflow without the bloat, and who value extensibility and control over their agent's behaviour.
 
