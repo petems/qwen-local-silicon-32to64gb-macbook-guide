@@ -118,7 +118,7 @@ llama-server \
   --ctx-size 65536 \
   --n-gpu-layers 99 \
   --no-mmap \
-  --fa on \
+  --flash-attn on \
   --temp 1.0 \
   --top-p 0.95 \
   --top-k 40 \
@@ -135,7 +135,7 @@ llama-server \
   --ctx-size 32768 \
   --n-gpu-layers 99 \
   --no-mmap \
-  --fa on \
+  --flash-attn on \
   --temp 1.0 \
   --top-p 0.95 \
   --top-k 40 \
@@ -153,7 +153,7 @@ See the [llama-server documentation](https://github.com/ggml-org/llama.cpp/blob/
 | `--ctx-size 65536` / `32768` | Caps context window. 64GB machines can use 64K tokens; 32GB machines should cap at 32K. **Critical** — the default 256K will OOM instantly. |
 | `--n-gpu-layers 99` | Offloads as many layers as possible to Metal GPU. On 32GB, lower to `30-50` if you hit memory pressure. |
 | `--no-mmap` | Loads model fully into RAM upfront — avoids page fault stuttering on macOS. Less critical on 64GB (more headroom) but still a reasonable default. |
-| `--fa on` | Enables Flash Attention for faster inference. |
+| `--flash-attn on` | Enables Flash Attention for faster inference. Default is `auto` in newer versions. |
 
 You now have an OpenAI-compatible API at `http://localhost:8080/v1`.
 
@@ -439,7 +439,7 @@ The most productive setup on 32GB is a **hybrid approach**:
 
 llama-server \
   -hf unsloth/Qwen3-Coder-Next-GGUF:Q4_K_M \
-  --ctx-size 65536 --n-gpu-layers 99 --no-mmap --fa on \
+  --ctx-size 65536 --n-gpu-layers 99 --no-mmap --flash-attn on \
   --temp 1.0 --top-p 0.95 --top-k 40 --min-p 0.01 \
   --jinja --port 8080
 
@@ -447,7 +447,7 @@ llama-server \
 
 llama-server \
   -hf unsloth/Qwen3-Coder-Next-GGUF:Q2_K \
-  --ctx-size 32768 --n-gpu-layers 99 --no-mmap --fa on \
+  --ctx-size 32768 --n-gpu-layers 99 --no-mmap --flash-attn on \
   --temp 1.0 --top-p 0.95 --top-k 40 --min-p 0.01 \
   --jinja --port 8080
 
