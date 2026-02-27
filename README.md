@@ -232,15 +232,53 @@ brew install pi-coding-agent
 
 # Or via npm
 npm install -g @mariozechner/pi-coding-agent
-
-# Point at your local server
-pi --model openai:qwen3-coder-next --api-base http://localhost:8080/v1
-
-# Or if using Ollama instead of llama-server
-pi --model ollama:qwen3-coder-next
 ```
 
-Pi runs in four modes: interactive TUI, print/JSON for scripting, RPC for process integration, and SDK for embedding in your own apps. Install community packages with `pi install npm:@foo/pi-tools` or `pi install git:github.com/user/repo`. Configure with `pi config`. See [pi.dev](https://pi.dev/) for more.
+Pi discovers models via `~/.pi/agent/models.json`. Run the setup script to configure it automatically:
+
+```bash
+./setup-pi-local.sh
+```
+
+Or manually create `~/.pi/agent/models.json`:
+
+```json
+{
+  "providers": {
+    "ollama": {
+      "baseUrl": "http://localhost:11434/v1",
+      "api": "openai-completions",
+      "apiKey": "ollama",
+      "models": [
+        { "id": "qwen3:latest" }
+      ]
+    },
+    "llama-server": {
+      "baseUrl": "http://localhost:8080/v1",
+      "api": "openai-completions",
+      "apiKey": "local",
+      "models": [
+        { "id": "qwen3-coder-next", "contextWindow": 65536, "maxTokens": 32000 }
+      ]
+    }
+  }
+}
+```
+
+Then run with whichever provider you have running:
+
+```bash
+# Verify your models are visible
+pi --list-models
+
+# Use llama-server
+pi --model llama-server/qwen3-coder-next
+
+# Use Ollama
+pi --model ollama/qwen3:latest
+```
+
+Pi runs in four modes: interactive TUI, print/JSON for scripting, RPC for process integration, and SDK for embedding in your own apps. Install community packages with `pi install npm:@foo/pi-tools` or `pi install git:github.com/user/repo`. Configure with `pi config`. See [pi.dev](https://pi.dev/) and the [custom models docs](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/models.md) for more.
 
 **Best for:** developers who want Claude Code-style workflow without the bloat, and who value extensibility and control over their agent's behaviour.
 
@@ -382,8 +420,8 @@ aider --model ollama/qwen2.5-coder:32b
 llm install llm-ollama
 llm -m qwen2.5-coder:32b "your prompt here"
 
-# Or with Pi:
-pi --model ollama:qwen2.5-coder:32b
+# Or with Pi (add to ~/.pi/agent/models.json first):
+pi --model ollama/qwen2.5-coder:32b
 ```
 
 ### Qwen3-Coder (the non-"Next" version)
@@ -520,8 +558,10 @@ aider --model ollama/qwen2.5-coder:32b
 # OpenCode (agent TUI) — https://opencode.ai/
 opencode
 
-# Pi (extensible harness) — https://github.com/badlogic/pi-mono
-pi --model openai:qwen3-coder-next --api-base http://localhost:8080/v1
+# Pi (extensible harness) — https://pi.dev/
+# Requires ~/.pi/agent/models.json config (see Section 5, Option C)
+pi --model llama-server/qwen3-coder-next
+pi --model ollama/qwen3:latest
 
 # llm (one-off tasks) — https://llm.datasette.io/
 # Via Ollama (loads model in Ollama — don't mix with running llama-server)
