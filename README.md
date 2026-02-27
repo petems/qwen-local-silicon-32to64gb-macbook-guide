@@ -253,11 +253,30 @@ aider \
   --openai-api-base http://localhost:8080/v1 \
   --openai-api-key not-needed
 
-# Run with Ollama
-aider --model ollama/qwen3.5:35b-a3b
+# Run with Ollama (ollama_chat/ prefix recommended over ollama/)
+aider --model ollama_chat/qwen3.5:35b-a3b
 # Or the older but proven:
-# aider --model ollama/qwen2.5-coder:32b
+# aider --model ollama_chat/qwen2.5-coder:32b
 ```
+
+> **Note:** Aider may show a warning like *"Unknown context window size and costs, using sane defaults"* for local models. This is harmless — it just means Aider doesn't have the model in its built-in database. It defaults to unlimited context and free tokens, which is correct for local models. This repo includes a pre-configured `.aider.model.settings.yml` that suppresses the warning and sets correct context window sizes — if you run Aider from this repo's directory, it picks it up automatically. To use it in other projects, copy it or create your own `.aider.model.settings.yml` in your project root or home directory:
+>
+> ```yaml
+> - name: openai/qwen3-coder-next
+>   edit_format: whole
+>   extra_params:
+>     num_ctx: 65536
+>
+> - name: ollama_chat/qwen3.5:35b-a3b
+>   extra_params:
+>     num_ctx: 65536
+>
+> - name: ollama_chat/qwen2.5-coder:32b
+>   extra_params:
+>     num_ctx: 32768
+> ```
+>
+> See the [Aider model settings docs](https://aider.chat/docs/config/adv-model-settings.html) for more options.
 
 **Best for:** editing existing codebases, refactoring, fixing bugs across multiple files.
 
@@ -439,9 +458,9 @@ Each tool has its own model naming convention. Here's how to reference your loca
 | Scenario | Aider | OpenCode | Pi | `llm` CLI |
 |---|---|---|---|---|
 | **llama-server on 8080** | `openai/qwen3-coder-next` | `llama.cpp/qwen3-coder-next` (via `opencode.jsonc`) | `llama-server/qwen3-coder-next` | Custom alias: `qwen-local` |
-| **Ollama (qwen3.5)** | `ollama/qwen3.5:35b-a3b` | `ollama/qwen3.5:35b-a3b` | `ollama/qwen3.5:35b-a3b` | `qwen3.5:35b-a3b` (with llm-ollama) |
-| **Ollama (qwen2.5)** | `ollama/qwen2.5-coder:32b` | `ollama/qwen2.5-coder:32b` | `ollama/qwen2.5-coder:32b` | `qwen2.5-coder:32b` |
-| **Ollama (qwen3)** | `ollama/qwen3-coder-next` | `ollama/qwen3-coder-next` | `ollama/qwen3:latest` | `qwen3` (with llm-ollama) |
+| **Ollama (qwen3.5)** | `ollama_chat/qwen3.5:35b-a3b` | `ollama/qwen3.5:35b-a3b` | `ollama/qwen3.5:35b-a3b` | `qwen3.5:35b-a3b` (with llm-ollama) |
+| **Ollama (qwen2.5)** | `ollama_chat/qwen2.5-coder:32b` | `ollama/qwen2.5-coder:32b` | `ollama/qwen2.5-coder:32b` | `qwen2.5-coder:32b` |
+| **Ollama (qwen3)** | `ollama_chat/qwen3-coder-next` | `ollama/qwen3-coder-next` | `ollama/qwen3:latest` | `qwen3` (with llm-ollama) |
 
 **OpenCode configuration note:** OpenCode uses a project-level `opencode.jsonc` config file (included in this repo). It defines custom providers with the `@ai-sdk/openai-compatible` npm package, so you can name models explicitly and set context/output limits. No API key is needed for local providers — just omit it. Edit `opencode.jsonc` to change the default model or add new providers.
 
@@ -509,7 +528,7 @@ Released 2026-02-24. A 35B MoE model with only 3B active parameters — same act
 ollama pull qwen3.5:35b-a3b
 
 # Use with any agent:
-aider --model ollama/qwen3.5:35b-a3b
+aider --model ollama_chat/qwen3.5:35b-a3b
 
 # Via llama-server (more control)
 llama-server -hf unsloth/Qwen3.5-35B-A3B-GGUF:Q4_K_M \
@@ -534,7 +553,7 @@ A 32B parameter model that runs well on both 32GB and 64GB Macs. The default Oll
 ollama pull qwen2.5-coder:32b
 
 # Use with any agent — they all speak OpenAI-compatible API:
-aider --model ollama/qwen2.5-coder:32b
+aider --model ollama_chat/qwen2.5-coder:32b
 
 # Or one-off with llm:
 llm install llm-ollama
@@ -685,9 +704,9 @@ aider --model openai/qwen3-coder-next \
       --openai-api-base http://localhost:8080/v1 \
       --openai-api-key not-needed
 
-# Aider with Ollama
-aider --model ollama/qwen3.5:35b-a3b
-# aider --model ollama/qwen2.5-coder:32b   # alternative
+# Aider with Ollama (ollama_chat/ prefix recommended)
+aider --model ollama_chat/qwen3.5:35b-a3b
+# aider --model ollama_chat/qwen2.5-coder:32b   # alternative
 
 # OpenCode (agent TUI) — https://opencode.ai/
 # Uses opencode.jsonc in project root for provider config

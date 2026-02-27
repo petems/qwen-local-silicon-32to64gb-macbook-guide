@@ -1,0 +1,16 @@
+# Aider model settings for local Qwen models.
+# Suppresses "Unknown context window size and costs" warnings.
+# See: https://aider.chat/docs/config/adv-model-settings.html
+
+- name: openai/qwen3-coder-next
+  edit_format: whole
+  extra_params:
+    num_ctx: 65536
+
+- name: ollama_chat/qwen3.5:35b-a3b
+  extra_params:
+    num_ctx: 65536
+
+- name: ollama_chat/qwen2.5-coder:32b
+  extra_params:
+    num_ctx: 32768
