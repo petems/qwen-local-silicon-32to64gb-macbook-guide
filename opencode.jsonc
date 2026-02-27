@@ -24,6 +24,9 @@
         "baseURL": "http://localhost:11434/v1"
       },
       "models": {
+        "qwen3.5:35b-a3b": {
+          "name": "Qwen3.5 35B-A3B (local)"
+        },
         "qwen2.5-coder:32b": {
           "name": "Qwen2.5-Coder 32B (local)"
         },

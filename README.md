@@ -2,17 +2,32 @@
 
 A no-nonsense guide to running Qwen coding models locally on Apple Silicon MacBooks with your choice of coding agent or CLI tool. Covers both **32GB** and **64GB** configurations.
 
-> **About Qwen3-Coder-Next:** An 80B parameter MoE model that only activates 3B params per inference. Available in various quantizations to fit different RAM configurations. Open weights, fully offline, your code never leaves your machine.
+> **About the models:** This guide covers three main local models — **Qwen3-Coder-Next** (80B MoE, 3B active, coding-specialized), **Qwen3.5-35B-A3B** (35B MoE, 3B active, general-purpose), and **Qwen2.5-Coder-32B** (32B dense, coding-focused). All run fully offline — your code never leaves your machine.
 
 ## Start Here — Pick Your Path
 
 **64GB Macs:**
-- **Recommended:** Qwen3-Coder-Next at Q4_K_M via llama-server — best quality for complex work
-- **Fast alternative:** Qwen2.5-Coder-32B via Ollama for quicker tasks
+- **Recommended:** Qwen3-Coder-Next at Q4_K_M via llama-server — best quality for complex coding work
+- **Alternative:** Qwen3.5-35B-A3B via Ollama — strong general-purpose + coding, lighter on RAM
+- **Fast option:** Qwen2.5-Coder-32B via Ollama for quicker tasks
 
 **32GB Macs:**
-- **Recommended:** Qwen2.5-Coder-32B via Ollama — better quality at this RAM tier
+- **Recommended:** Qwen3.5-35B-A3B via Ollama — best balance of quality and RAM usage (~22GB at Q4_K_M)
+- **Alternative:** Qwen2.5-Coder-32B via Ollama — proven and fast
 - **Alternative:** Qwen3-Coder-Next at Q2_K (fits but lower quality due to aggressive quantization)
+
+### Which model should I pick?
+
+| | Qwen3-Coder-Next | Qwen3.5-35B-A3B | Qwen2.5-Coder-32B |
+|---|---|---|---|
+| **Total / active params** | 80B / 3B | 35B / 3B | 32B / 32B (dense) |
+| **Architecture** | MoE (coding-specialized) | MoE (general-purpose) | Dense (coding-focused) |
+| **Context** | 256K | 256K | 32K |
+| **RAM @ Q4_K_M** | ~38GB (64GB Mac) | ~22GB (32GB Mac) | ~20GB (32GB Mac) |
+| **Best for** | Complex agentic coding on 64GB | All-rounder on 32GB or 64GB | Quick tasks, proven reliability |
+| **License** | Open weights | Apache 2.0 | Apache 2.0 |
+
+**TL;DR:** On 64GB, use Qwen3-Coder-Next for serious coding. On 32GB, use Qwen3.5-35B-A3B — it has the same 3B active params as Coder-Next but fits comfortably without aggressive quantization.
 
 ---
 
@@ -54,9 +69,11 @@ if ! pgrep ollama >/dev/null 2>&1; then
 fi
 
 # Pull the recommended model for your RAM tier
-# For 32GB: qwen2.5-coder:32b (recommended)
-# For 64GB: qwen2.5-coder:32b (fast option) or larger models
-ollama pull qwen2.5-coder:32b
+# For 32GB: qwen3.5:35b-a3b (recommended — ~22GB, fits comfortably)
+#        or qwen2.5-coder:32b (proven alternative)
+# For 64GB: qwen3.5:35b-a3b (light option) or qwen2.5-coder:32b (fast option)
+ollama pull qwen3.5:35b-a3b
+# ollama pull qwen2.5-coder:32b  # alternative
 
 # Verify it works
 curl http://localhost:11434/v1/models
@@ -109,15 +126,21 @@ llama-cli -hf unsloth/Qwen3-Coder-Next-GGUF:Q4_K_M
 llama-cli -hf unsloth/Qwen3-Coder-Next-GGUF:Q5_K_M
 ```
 
-### 32GB Macs — use Q2_K
+### 32GB Macs — Qwen3.5-35B-A3B at Q4_K_M (recommended) or Qwen3-Coder-Next at Q2_K
 
-On 32GB you need the **Q2_K** quantization (~26GB). This is the only quant that fits comfortably and leaves room for context.
+**Option A (recommended): Qwen3.5-35B-A3B at Q4_K_M** — fits comfortably in ~22GB, leaving plenty of room for context. Good quality quantization (not aggressive like Q2_K).
+
+```bash
+llama-cli -hf unsloth/Qwen3.5-35B-A3B-GGUF:Q4_K_M
+```
+
+**Option B: Qwen3-Coder-Next at Q2_K** — the coding-specialized model, but needs aggressive quantization to fit in 32GB (~26GB).
 
 ```bash
 llama-cli -hf unsloth/Qwen3-Coder-Next-GGUF:Q2_K
 ```
 
-> **Why Q2_K on 32GB?** Q4_K_M needs ~38GB just for the model weights — on a 32GB machine that means constant swapping and unusable speeds. Q2_K fits in ~26GB and leaves headroom for a usable context window. Quality is "fair" but genuinely usable for most coding tasks.
+> **Which to pick on 32GB?** Qwen3.5-35B-A3B at Q4_K_M gives better overall quality because the quantization is much less aggressive. Qwen3-Coder-Next has coding-specific training, but Q2_K quantization loses a lot of that advantage. For most users, Qwen3.5-35B-A3B is the better 32GB choice.
 
 ---
 
@@ -134,6 +157,7 @@ llama-cli -hf unsloth/Qwen3-Coder-Next-GGUF:Q2_K
 PORT=9090 ./start-llama-server.sh
 GPU_LAYERS=50 ./start-llama-server.sh
 CTX_SIZE=16384 ./start-llama-server.sh
+MODEL_VARIANT=coder-next ./start-llama-server.sh  # Use Qwen3-Coder-Next instead of Qwen3.5 on 32GB
 ```
 
 Or run manually with the commands below.
@@ -155,7 +179,26 @@ llama-server \
   --port 8080
 ```
 
-### 32GB configuration
+### 32GB configuration — Qwen3.5-35B-A3B (recommended)
+
+```bash
+llama-server \
+  -hf unsloth/Qwen3.5-35B-A3B-GGUF:Q4_K_M \
+  --ctx-size 32768 \
+  --n-gpu-layers 99 \
+  --no-mmap \
+  --flash-attn on \
+  --temp 1.0 \
+  --top-p 0.95 \
+  --top-k 40 \
+  --min-p 0.01 \
+  --jinja \
+  --port 8080
+```
+
+> **Why 99 GPU layers with Qwen3.5?** At ~22GB the model fits comfortably in 32GB unified memory, so you can offload all layers to GPU. This is a major advantage over Qwen3-Coder-Next Q2_K which needs conservative GPU layer settings.
+
+### 32GB configuration — Qwen3-Coder-Next Q2_K (alternative)
 
 ```bash
 llama-server \
@@ -211,7 +254,9 @@ aider \
   --openai-api-key not-needed
 
 # Run with Ollama
-aider --model ollama/qwen2.5-coder:32b
+aider --model ollama/qwen3.5:35b-a3b
+# Or the older but proven:
+# aider --model ollama/qwen2.5-coder:32b
 ```
 
 **Best for:** editing existing codebases, refactoring, fixing bugs across multiple files.
@@ -242,7 +287,9 @@ The included `opencode.jsonc` defines both providers so you can switch between t
 "model": "llama.cpp/qwen3-coder-next"
 
 // Or switch to Ollama
-"model": "ollama/qwen2.5-coder:32b"
+"model": "ollama/qwen3.5:35b-a3b"
+// Or the older Qwen2.5:
+// "model": "ollama/qwen2.5-coder:32b"
 ```
 
 See the [install docs](https://opencode.ai/docs/#install) for more options.
@@ -392,6 +439,7 @@ Each tool has its own model naming convention. Here's how to reference your loca
 | Scenario | Aider | OpenCode | Pi | `llm` CLI |
 |---|---|---|---|---|
 | **llama-server on 8080** | `openai/qwen3-coder-next` | `llama.cpp/qwen3-coder-next` (via `opencode.jsonc`) | `llama-server/qwen3-coder-next` | Custom alias: `qwen-local` |
+| **Ollama (qwen3.5)** | `ollama/qwen3.5:35b-a3b` | `ollama/qwen3.5:35b-a3b` | `ollama/qwen3.5:35b-a3b` | `qwen3.5:35b-a3b` (with llm-ollama) |
 | **Ollama (qwen2.5)** | `ollama/qwen2.5-coder:32b` | `ollama/qwen2.5-coder:32b` | `ollama/qwen2.5-coder:32b` | `qwen2.5-coder:32b` |
 | **Ollama (qwen3)** | `ollama/qwen3-coder-next` | `ollama/qwen3-coder-next` | `ollama/qwen3:latest` | `qwen3` (with llm-ollama) |
 
@@ -447,6 +495,31 @@ Monitor Activity Monitor → Memory tab. If you see yellow/red memory pressure, 
 ## 7. Alternative Models
 
 Depending on your RAM and use case, you might want a different model:
+
+### Qwen3.5-35B-A3B — best all-rounder for 32GB
+
+Released 2026-02-24. A 35B MoE model with only 3B active parameters — same active params as Qwen3-Coder-Next but in a much smaller package. General-purpose (coding, reasoning, vision, multilingual) rather than coding-specialized, but benchmarks show competitive coding performance (~72% on SWE-Bench Verified for the 27B variant).
+
+**On 32GB Macs** this is the new top recommendation — at Q4_K_M (~22GB) it fits comfortably with room for context and other apps. Much better quantization quality than Qwen3-Coder-Next at Q2_K.
+
+**On 64GB Macs** it's a lighter alternative to Qwen3-Coder-Next. Use Coder-Next for maximum coding quality and Qwen3.5 when you want a capable model that leaves more RAM headroom.
+
+```bash
+# Via Ollama (easiest)
+ollama pull qwen3.5:35b-a3b
+
+# Use with any agent:
+aider --model ollama/qwen3.5:35b-a3b
+
+# Via llama-server (more control)
+llama-server -hf unsloth/Qwen3.5-35B-A3B-GGUF:Q4_K_M \
+  --ctx-size 32768 --n-gpu-layers 99 --no-mmap --flash-attn on \
+  --temp 1.0 --top-p 0.95 --top-k 40 --min-p 0.01 \
+  --jinja --port 8080
+
+# Or one-off with llm:
+llm -m qwen3.5:35b-a3b "your prompt here"
+```
 
 ### Qwen2.5-Coder-32B — fast and proven
 
@@ -550,19 +623,21 @@ If you get a JSON response with generated code, you're good to go.
 With 64GB you can run the full-size model at good quality. Recommended setup:
 
 1. **Primary model:** Qwen3-Coder-Next at Q4_K_M via llama-server — best quality for complex work with 64K context
-2. **Fast option:** Qwen2.5-Coder-32B via Ollama — quicker inference for simpler tasks
-3. **Quick tasks:** `llm` CLI piped through your local model for commit messages, code review, error explanations, docs generation
-4. **Agentic work:** Aider or Pi pointed at your local server for multi-file refactoring and longer coding sessions
-5. **Complex architecture:** Fall back to Claude or GPT API when the local model isn't cutting it — no shame in that
+2. **Lighter alternative:** Qwen3.5-35B-A3B via Ollama — strong all-rounder that leaves more RAM headroom
+3. **Fast option:** Qwen2.5-Coder-32B via Ollama — quicker inference for simpler tasks
+4. **Quick tasks:** `llm` CLI piped through your local model for commit messages, code review, error explanations, docs generation
+5. **Agentic work:** Aider or Pi pointed at your local server for multi-file refactoring and longer coding sessions
+6. **Complex architecture:** Fall back to Claude or GPT API when the local model isn't cutting it — no shame in that
 
 ### 32GB Macs
 
 The most productive setup on 32GB is a **hybrid approach**:
 
-1. **Daily driver:** Qwen2.5-Coder-32B via Ollama — better quality at this RAM level than Qwen3-Coder-Next at Q2
-2. **Quick tasks:** `llm` CLI piped through your local model for commit messages, code review, error explanations, docs generation
-3. **Agentic work:** Aider or Pi pointed at Ollama for multi-file refactoring and longer coding sessions
-4. **Complex architecture:** Fall back to Claude or GPT API when the local model isn't cutting it — no shame in that
+1. **Daily driver:** Qwen3.5-35B-A3B via Ollama — best quality at this RAM level, fits comfortably at Q4_K_M
+2. **Fast alternative:** Qwen2.5-Coder-32B via Ollama — proven and reliable for quick coding tasks
+3. **Quick tasks:** `llm` CLI piped through your local model for commit messages, code review, error explanations, docs generation
+4. **Agentic work:** Aider or Pi pointed at Ollama for multi-file refactoring and longer coding sessions
+5. **Complex architecture:** Fall back to Claude or GPT API when the local model isn't cutting it — no shame in that
 
 ---
 
@@ -577,7 +652,15 @@ llama-server \
   --temp 1.0 --top-p 0.95 --top-k 40 --min-p 0.01 \
   --jinja --port 8080
 
-# === 32GB: Qwen3-Coder-Next via llama-server (conservative defaults) ===
+# === 32GB: Qwen3.5-35B-A3B via llama-server (recommended for 32GB) ===
+
+llama-server \
+  -hf unsloth/Qwen3.5-35B-A3B-GGUF:Q4_K_M \
+  --ctx-size 32768 --n-gpu-layers 99 --no-mmap --flash-attn on \
+  --temp 1.0 --top-p 0.95 --top-k 40 --min-p 0.01 \
+  --jinja --port 8080
+
+# === 32GB: Qwen3-Coder-Next via llama-server (alternative) ===
 
 llama-server \
   -hf unsloth/Qwen3-Coder-Next-GGUF:Q2_K \
@@ -585,14 +668,15 @@ llama-server \
   --temp 1.0 --top-p 0.95 --top-k 40 --min-p 0.01 \
   --jinja --port 8080
 
-# === ANY RAM: Qwen2.5-Coder-32B via Ollama (fast, proven) ===
+# === ANY RAM: Ollama models ===
 
 # Safe start pattern - checks if already running
 if ! pgrep ollama >/dev/null 2>&1; then
   ollama serve &
   sleep 2
 fi
-ollama pull qwen2.5-coder:32b
+ollama pull qwen3.5:35b-a3b       # recommended for 32GB
+ollama pull qwen2.5-coder:32b     # proven alternative
 
 # === PICK YOUR TOOL ===
 
@@ -602,13 +686,15 @@ aider --model openai/qwen3-coder-next \
       --openai-api-key not-needed
 
 # Aider with Ollama
-aider --model ollama/qwen2.5-coder:32b
+aider --model ollama/qwen3.5:35b-a3b
+# aider --model ollama/qwen2.5-coder:32b   # alternative
 
 # OpenCode (agent TUI) — https://opencode.ai/
 # Uses opencode.jsonc in project root for provider config
 opencode                                    # uses default model from config
 # Edit opencode.jsonc "model" field to switch between:
 #   "llama.cpp/qwen3-coder-next"            # llama-server on :8080
+#   "ollama/qwen3.5:35b-a3b"               # Ollama on :11434
 #   "ollama/qwen2.5-coder:32b"              # Ollama on :11434
 
 # Pi (extensible harness) — https://pi.dev/
@@ -618,8 +704,8 @@ pi --model ollama/qwen3:latest
 
 # llm (one-off tasks) — https://llm.datasette.io/
 # Via Ollama (loads model in Ollama — don't mix with running llama-server)
+llm -m qwen3.5:35b-a3b "your prompt"
 llm -m qwen2.5-coder:32b "your prompt"
-llm -m qwen3 "your prompt"
 # Via llama-server (uses already-running server — no extra memory)
 llm -m qwen-local "your prompt"
 cat file.py | llm -m qwen-local -s "review this code"

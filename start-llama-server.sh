@@ -7,6 +7,7 @@
 #   PORT=9090 ./start-llama-server.sh
 #   GPU_LAYERS=50 ./start-llama-server.sh
 #   CTX_SIZE=16384 ./start-llama-server.sh
+#   MODEL_VARIANT=coder-next ./start-llama-server.sh  # Use Qwen3-Coder-Next instead of Qwen3.5 on 32GB
 
 set -euo pipefail
 
@@ -68,12 +69,25 @@ if [[ $ram_gb -ge 64 ]]; then
   CTX_SIZE="${CTX_SIZE:-65536}"
   GPU_LAYERS="${GPU_LAYERS:-99}"
 elif [[ $ram_gb -ge 32 ]]; then
-  pass "${ram_gb}GB RAM — using 32GB configuration"
-  MODEL="unsloth/Qwen3-Coder-Next-GGUF:Q2_K"
-  QUANT="Q2_K"
-  MODEL_SIZE="~26GB"
-  CTX_SIZE="${CTX_SIZE:-32768}"
-  GPU_LAYERS="${GPU_LAYERS:-40}"
+  MODEL_VARIANT="${MODEL_VARIANT:-qwen3.5}"
+  case "$MODEL_VARIANT" in
+    coder-next)
+      pass "${ram_gb}GB RAM — using 32GB configuration (Qwen3-Coder-Next Q2_K)"
+      MODEL="unsloth/Qwen3-Coder-Next-GGUF:Q2_K"
+      QUANT="Q2_K"
+      MODEL_SIZE="~26GB"
+      CTX_SIZE="${CTX_SIZE:-32768}"
+      GPU_LAYERS="${GPU_LAYERS:-40}"
+      ;;
+    *)
+      pass "${ram_gb}GB RAM — using 32GB configuration (Qwen3.5-35B-A3B Q4_K_M)"
+      MODEL="unsloth/Qwen3.5-35B-A3B-GGUF:Q4_K_M"
+      QUANT="Q4_K_M"
+      MODEL_SIZE="~22GB"
+      CTX_SIZE="${CTX_SIZE:-32768}"
+      GPU_LAYERS="${GPU_LAYERS:-99}"
+      ;;
+  esac
 else
   fail "${ram_gb}GB RAM — not enough for Qwen3-Coder-Next"
   info "Minimum 32GB unified memory required."
