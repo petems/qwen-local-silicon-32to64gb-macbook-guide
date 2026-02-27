@@ -60,7 +60,7 @@ if [[ -f "$YAML_FILE" ]]; then
     sed 's/^/    /' "$YAML_FILE"
     printf "\n"
     read -rp "  Overwrite the '$MODEL_ID' entry? [y/N] " answer
-    if [[ "${answer,,}" != "y" ]]; then
+    if [[ "$answer" != "y" && "$answer" != "Y" ]]; then
       info "No changes made."
       exit 0
     fi
